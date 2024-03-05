@@ -7,6 +7,8 @@ package main
 import (
 	"bytes"
 	"cmd/internal/cov/covcmd"
+	"cmd/internal/edit"
+	"cmd/internal/objabi"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -23,9 +25,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"cmd/internal/edit"
-	"cmd/internal/objabi"
 )
 
 const usageMessage = "" +
@@ -70,6 +69,7 @@ var (
 	outfilelist      = flag.String("outfilelist", "", "file containing list of output files (one per line) if -pkgcfg is in use")
 	htmlOut          = flag.String("html", "", "generate HTML representation of coverage profile")
 	funcOut          = flag.String("func", "", "output coverage profile information for each function")
+	csvSummary       = flag.String("csv", "", "generate coverage profile summary for each package")
 	pkgcfg           = flag.String("pkgcfg", "", "enable full-package instrumentation mode using params from specified config file")
 	pkgconfig        covcmd.CoverPkgConfig
 	outputfiles      []string // list of *.cover.go instrumented outputs to write, one per input (set when -pkgcfg is in use)
@@ -108,11 +108,14 @@ func main() {
 		return
 	}
 
-	// Output HTML or function coverage information.
-	if *htmlOut != "" {
+	// Output HTML, function, or package summary coverage information.
+	switch {
+	case *htmlOut != "":
 		err = htmlOutput(profile, *output)
-	} else {
+	case *funcOut != "":
 		err = funcOutput(profile, *output)
+	case *csvSummary != "":
+		err = packageOutput(profile, *output)
 	}
 
 	if err != nil {
@@ -129,6 +132,12 @@ func parseFlags() error {
 			return fmt.Errorf("too many options")
 		}
 		profile = *funcOut
+	}
+	if *csvSummary != "" {
+		if profile != "" {
+			return fmt.Errorf("too many options")
+		}
+		profile = *csvSummary
 	}
 
 	// Must either display a profile or rewrite Go source.
