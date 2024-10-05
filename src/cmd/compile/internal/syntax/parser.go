@@ -1951,6 +1951,11 @@ func (p *parser) paramDeclOrNil(name *Name, follow token) *Field {
 		f.Name = name
 	}
 
+	if p.tok == _Const {
+		f.Type = p.const_type()
+		return f
+	}
+
 	if p.tok == _DotDotDot {
 		// [name] "..." ...
 		t := new(DotsType)
@@ -2738,6 +2743,12 @@ func (p *parser) name() *Name {
 	n := NewName(p.pos(), "_")
 	p.syntaxError("expected name")
 	p.advance()
+	return n
+}
+
+func (p *parser) const_type() *ConstType {
+	n := NewConstType(p.pos())
+	p.next()
 	return n
 }
 

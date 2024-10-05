@@ -132,6 +132,12 @@ func NewName(pos Pos, value string) *Name {
 	return n
 }
 
+func NewConstType(pos Pos) *ConstType {
+	n := new(ConstType)
+	n.pos = pos
+	return n
+}
+
 type (
 	Expr interface {
 		Node
@@ -308,6 +314,10 @@ type (
 	ChanType struct {
 		Dir  ChanDir // 0 means no direction
 		Elem Expr
+		expr
+	}
+
+	ConstType struct {
 		expr
 	}
 )
